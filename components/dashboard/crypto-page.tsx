@@ -9,6 +9,7 @@ import {
   Clock,
   Flag,
   LayoutGrid,
+  Menu,
   Search,
   SlidersHorizontal,
   TrendingUp,
@@ -42,7 +43,23 @@ export default function CryptoPage({ filter, locale = "en" }: Props) {
   const item = findCryptoFilter(filter)
   const [sort, setSort] = useState<string>("volume24hr")
   const [showSortMenu, setShowSortMenu] = useState(false)
+  const [showMobileNav, setShowMobileNav] = useState(false)
   const [query, setQuery] = useState("")
+  const sortMenuRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!showSortMenu) return
+    const onDocClick = (e: MouseEvent) => {
+      if (!sortMenuRef.current) return
+      if (!sortMenuRef.current.contains(e.target as Node)) setShowSortMenu(false)
+    }
+    document.addEventListener("mousedown", onDocClick)
+    return () => document.removeEventListener("mousedown", onDocClick)
+  }, [showSortMenu])
+
+  useEffect(() => {
+    setShowMobileNav(false)
+  }, [item.routeSlug])
 
   const { counts } = useCryptoCounts()
   const { events, totalCount, hasMore, isLoading, isLoadingMore, loadMore } =
@@ -82,6 +99,14 @@ export default function CryptoPage({ filter, locale = "en" }: Props) {
           <main className="min-w-0">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-baseline gap-3">
+                <button
+                  type="button"
+                  aria-label={locale === "zh" ? "分类" : "Categories"}
+                  onClick={() => setShowMobileNav((v) => !v)}
+                  className="inline-flex size-8 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 lg:hidden"
+                >
+                  <Menu className="size-4" />
+                </button>
                 <h1 className="text-[22px] font-semibold tracking-tight">
                   {headerLabel}
                   {item.routeSlug ? (
@@ -100,9 +125,11 @@ export default function CryptoPage({ filter, locale = "en" }: Props) {
                   onChange={setQuery}
                   placeholder={locale === "zh" ? "搜索" : "Search"}
                 />
-                <div className="relative">
+                <div className="relative" ref={sortMenuRef}>
                   <button
                     type="button"
+                    aria-haspopup="menu"
+                    aria-expanded={showSortMenu}
                     onClick={() => setShowSortMenu((v) => !v)}
                     className="inline-flex h-8 items-center gap-1 rounded-full bg-neutral-100 px-3 text-[12px] font-medium hover:bg-neutral-200"
                   >
@@ -111,11 +138,15 @@ export default function CryptoPage({ filter, locale = "en" }: Props) {
                     <ChevronDown className="size-3" />
                   </button>
                   {showSortMenu ? (
-                    <div className="absolute right-0 top-9 z-10 w-48 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 text-[13px] shadow-lg">
+                    <div
+                      role="menu"
+                      className="absolute right-0 top-9 z-20 w-48 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 text-[13px] shadow-lg"
+                    >
                       {SORTS.map((s) => (
                         <button
                           key={s.value}
                           type="button"
+                          role="menuitem"
                           onClick={() => {
                             setSort(s.value)
                             setShowSortMenu(false)
@@ -133,6 +164,15 @@ export default function CryptoPage({ filter, locale = "en" }: Props) {
                 </div>
               </div>
             </div>
+
+            {showMobileNav ? (
+              <MobileNav
+                activeRouteSlug={item.routeSlug}
+                counts={counts}
+                locale={locale}
+                onClose={() => setShowMobileNav(false)}
+              />
+            ) : null}
 
             {isLoading && events.length === 0 ? (
               <Skeletons />
@@ -207,22 +247,65 @@ function Sidebar({
   )
 }
 
+function MobileNav({
+  activeRouteSlug,
+  counts,
+  locale,
+  onClose,
+}: {
+  activeRouteSlug: string | null
+  counts: Record<string, string>
+  locale: "en" | "zh"
+  onClose: () => void
+}) {
+  return (
+    <div className="mb-4 lg:hidden">
+      <nav className="rounded-xl border border-neutral-200 bg-white p-2">
+        {CRYPTO_GROUP_ORDER.map((group, gi) => {
+          const items = CRYPTO_SIDEBAR.filter((i) => i.group === group)
+          if (items.length === 0) return null
+          return (
+            <div
+              key={group}
+              className={cn("flex flex-col gap-0.5", gi > 0 && "mt-2 border-t border-neutral-100 pt-2")}
+            >
+              {items.map((it) => (
+                <SidebarRow
+                  key={it.routeSlug ?? "all"}
+                  item={it}
+                  active={it.routeSlug === activeRouteSlug}
+                  count={counts[it.countKey]}
+                  locale={locale}
+                  onClick={onClose}
+                />
+              ))}
+            </div>
+          )
+        })}
+      </nav>
+    </div>
+  )
+}
+
 function SidebarRow({
   item,
   active,
   count,
   locale,
+  onClick,
 }: {
   item: CryptoSidebarItem
   active: boolean
   count?: string
   locale: "en" | "zh"
+  onClick?: () => void
 }) {
   const href = item.routeSlug ? `/crypto/${item.routeSlug}` : `/crypto`
   const label = locale === "zh" ? item.labelZh : item.labelEn
   return (
     <Link
       href={href}
+      onClick={onClick}
       className={cn(
         "flex items-center justify-between gap-2 rounded-md px-3 py-2 text-[13px] transition",
         active

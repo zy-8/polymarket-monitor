@@ -4,7 +4,7 @@ import { memo, useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import useSWR from "swr"
-import { ArrowLeft, Check, ChevronDown, Copy, Search, X } from "lucide-react"
+import { ArrowLeft, Check, ChevronDown, Copy, ExternalLink, Search, X } from "lucide-react"
 import { useEvent } from "@/hooks/use-event"
 import {
   useActivity,
@@ -1237,8 +1237,8 @@ function FilteredActivityCard({
 
   const renderRow = (t: ActivityTrade, i: number, kind: "up" | "down") => {
     const cash = tradeCash(t)
-    return (
-      <div key={tradeRowKey(t, i)} className="px-4 py-2 flex items-center gap-3 text-[12px]">
+    const inner = (
+      <>
         <span
           className={cn(
             "rounded-md px-1.5 py-0.5 text-[10px] font-medium shrink-0",
@@ -1255,9 +1255,27 @@ function FilteredActivityCard({
         <span className="font-mono tabular-nums text-(--pm-text-primary) flex-1 text-right shrink-0">
           ${cash.toLocaleString(undefined, { maximumFractionDigits: 0 })}
         </span>
-        <span className="text-(--pm-text-tertiary) w-14 text-right shrink-0 text-[10px]">
+        <span className="text-(--pm-text-tertiary) w-14 text-right shrink-0 text-[10px] flex items-center justify-end gap-1">
           {fmtAge(now - t.timestamp)}
+          {t.transactionHash ? <ExternalLink className="size-2.5 opacity-60" /> : null}
         </span>
+      </>
+    )
+    const cls = "px-4 py-2 flex items-center gap-3 text-[12px]"
+    return t.transactionHash ? (
+      <a
+        key={tradeRowKey(t, i)}
+        href={`https://polygonscan.com/tx/${t.transactionHash}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="在 Polygonscan 查看交易"
+        className={cn(cls, "hover:bg-(--pm-neutral-50)/60 transition-colors")}
+      >
+        {inner}
+      </a>
+    ) : (
+      <div key={tradeRowKey(t, i)} className={cls}>
+        {inner}
       </div>
     )
   }
@@ -1367,8 +1385,14 @@ const ActivityGroup = memo(function ActivityGroup({
                   ? t.pseudonym
                   : t.proxyWallet.slice(0, 6) + "…" + t.proxyWallet.slice(-4)
             const cash = tradeCash(t)
+            const txHref = t.transactionHash
+              ? `https://polygonscan.com/tx/${t.transactionHash}`
+              : null
             return (
-              <div key={tradeRowKey(t, i)} className="px-4 py-2.5 flex items-center gap-3 text-[13px] hover:bg-(--pm-neutral-50)/60 transition-colors">
+              <div
+                key={tradeRowKey(t, i)}
+                className="px-4 py-2.5 flex items-center gap-3 text-[13px] hover:bg-(--pm-neutral-50)/60 transition-colors"
+              >
                 <Avatar src={t.profileImage} fallback={displayName} />
                 <div className="flex-1 min-w-0 flex items-center gap-1.5">
                   <span className="truncate text-(--pm-text-primary)">{displayName}</span>
@@ -1390,9 +1414,22 @@ const ActivityGroup = memo(function ActivityGroup({
                 <span className="font-mono tabular-nums text-(--pm-text-primary) w-16 text-right shrink-0">
                   ${cash.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </span>
-                <span className="text-(--pm-text-tertiary) w-16 text-right shrink-0 text-[11px]">
-                  {fmtAge(now - t.timestamp)}
-                </span>
+                {txHref ? (
+                  <a
+                    href={txHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="在 Polygonscan 查看交易"
+                    className="text-(--pm-text-tertiary) w-16 text-right shrink-0 text-[11px] hover:text-(--pm-text-primary) inline-flex items-center justify-end gap-1"
+                  >
+                    {fmtAge(now - t.timestamp)}
+                    <ExternalLink className="size-3 opacity-70" />
+                  </a>
+                ) : (
+                  <span className="text-(--pm-text-tertiary) w-16 text-right shrink-0 text-[11px]">
+                    {fmtAge(now - t.timestamp)}
+                  </span>
+                )}
               </div>
             )
           })

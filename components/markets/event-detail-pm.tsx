@@ -157,7 +157,7 @@ export default function EventDetailPm({ slug }: { slug: string }) {
   const isClosed = !!event.raw.closed
 
   // Probabilities for the OddsCard. Live last-trade-price comes from the
-  // ws-live-data `orders_matched` stream filtered by event slug; we fall back
+  // ws-live-data `trades` stream filtered by event slug; we fall back
   // to the slower-moving gamma snapshot until a trade streams in. Up/Down
   // (Yes/No) are mirrors that sum to 1: a trade on either side updates both,
   // so we derive each side from whichever stream value is most recent.

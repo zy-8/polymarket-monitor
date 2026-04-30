@@ -51,7 +51,7 @@ export interface LivePriceTick {
  * Live trade activity for an event over a single ws-live-data subscription.
  * Returns the running activity buffer plus the latest trade price per outcome
  * token (for the OddsCard probability display) — both derived from the same
- * `orders_matched` stream so callers don't need a second WS connection.
+ * `trades` stream so callers don't need a second WS connection.
  *
  * The REST `/trades?eventId=…` endpoint is intentionally not used (it caps at
  * offset 3000 and errors beyond it); historical lookups for a specific
@@ -171,7 +171,7 @@ export function useActivity(eventSlug: string | null) {
       [
         {
           topic: "activity",
-          type: "orders_matched",
+          type: "trades",
           filters: { event_slug: eventSlug },
         },
       ],

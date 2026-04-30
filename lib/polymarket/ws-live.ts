@@ -1,11 +1,11 @@
 // Polymarket "ws-live-data" stream. Used for the event activity feed (live
-// orders matched), comments, and Chainlink price ticks.
+// trades), comments, and Chainlink price ticks.
 //
 //   wss://ws-live-data.polymarket.com/
 //
 // Subscribe shape (multiple topics in one connection):
 //   {"action":"subscribe","subscriptions":[
-//     {"topic":"activity","type":"orders_matched","filters":"{\"event_slug\":\"...\"}"},
+//     {"topic":"activity","type":"trades","filters":"{\"event_slug\":\"...\"}"},
 //     {"topic":"crypto_prices_chainlink","type":"update","filters":"{\"symbol\":\"btc/usd\"}"}
 //   ]}
 
@@ -26,7 +26,7 @@ export interface LiveMessage<T = unknown> {
 }
 
 /**
- * `payload` shape for `topic=activity, type=orders_matched`. Mirrors the REST
+ * `payload` shape for `topic=activity, type=trades`. Mirrors the REST
  * `/trades` row, with at least the fields we need for rendering. Empty/optional
  * fields are tolerated.
  */

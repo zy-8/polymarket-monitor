@@ -5,13 +5,11 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import {
   Bookmark,
   Calendar,
-  ChevronDown,
   Clock,
   Flag,
   LayoutGrid,
   Menu,
   Search,
-  SlidersHorizontal,
   TrendingUp,
 } from "lucide-react"
 import { useCryptoCounts } from "@/hooks/use-crypto-counts"
@@ -31,31 +29,10 @@ interface Props {
   locale?: "en" | "zh"
 }
 
-const SORTS: Array<{ value: string; labelEn: string; labelZh: string }> = [
-  { value: "volume24hr", labelEn: "24h volume", labelZh: "24 小时成交" },
-  { value: "volume", labelEn: "Total volume", labelZh: "总成交" },
-  { value: "liquidity", labelEn: "Liquidity", labelZh: "流动性" },
-  { value: "endDate", labelEn: "Ending soon", labelZh: "即将结束" },
-  { value: "startDate", labelEn: "Newest", labelZh: "最新" },
-]
-
 export default function CryptoPage({ filter, locale = "en" }: Props) {
   const item = findCryptoFilter(filter)
-  const [sort, setSort] = useState<string>("volume24hr")
-  const [showSortMenu, setShowSortMenu] = useState(false)
   const [showMobileNav, setShowMobileNav] = useState(false)
   const [query, setQuery] = useState("")
-  const sortMenuRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    if (!showSortMenu) return
-    const onDocClick = (e: MouseEvent) => {
-      if (!sortMenuRef.current) return
-      if (!sortMenuRef.current.contains(e.target as Node)) setShowSortMenu(false)
-    }
-    document.addEventListener("mousedown", onDocClick)
-    return () => document.removeEventListener("mousedown", onDocClick)
-  }, [showSortMenu])
 
   useEffect(() => {
     setShowMobileNav(false)
@@ -63,7 +40,7 @@ export default function CryptoPage({ filter, locale = "en" }: Props) {
 
   const { counts } = useCryptoCounts()
   const { events, totalCount, hasMore, isLoading, isLoadingMore, loadMore } =
-    useCryptoEvents({ tagSlug: item.tagSlug, order: sort })
+    useCryptoEvents({ tagSlug: item.tagSlug })
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -88,7 +65,6 @@ export default function CryptoPage({ filter, locale = "en" }: Props) {
   }, [hasMore, isLoadingMore, loadMore])
 
   const headerLabel = locale === "zh" ? item.labelZh : item.labelEn
-  const sortLabelKey = locale === "zh" ? "labelZh" : "labelEn"
 
   return (
     <div className="min-h-screen bg-white text-neutral-900">
@@ -119,50 +95,11 @@ export default function CryptoPage({ filter, locale = "en" }: Props) {
                   {totalCount ? `${totalCount}` : "—"}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <SearchBox
-                  value={query}
-                  onChange={setQuery}
-                  placeholder={locale === "zh" ? "搜索" : "Search"}
-                />
-                <div className="relative" ref={sortMenuRef}>
-                  <button
-                    type="button"
-                    aria-haspopup="menu"
-                    aria-expanded={showSortMenu}
-                    onClick={() => setShowSortMenu((v) => !v)}
-                    className="inline-flex h-8 items-center gap-1 rounded-full bg-neutral-100 px-3 text-[12px] font-medium hover:bg-neutral-200"
-                  >
-                    <SlidersHorizontal className="size-3.5" />
-                    {SORTS.find((s) => s.value === sort)?.[sortLabelKey]}
-                    <ChevronDown className="size-3" />
-                  </button>
-                  {showSortMenu ? (
-                    <div
-                      role="menu"
-                      className="absolute right-0 top-9 z-20 w-48 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 text-[13px] shadow-lg"
-                    >
-                      {SORTS.map((s) => (
-                        <button
-                          key={s.value}
-                          type="button"
-                          role="menuitem"
-                          onClick={() => {
-                            setSort(s.value)
-                            setShowSortMenu(false)
-                          }}
-                          className={cn(
-                            "flex w-full items-center px-3 py-1.5 text-left hover:bg-neutral-50",
-                            s.value === sort && "font-medium text-neutral-900",
-                          )}
-                        >
-                          {s[sortLabelKey]}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
+              <SearchBox
+                value={query}
+                onChange={setQuery}
+                placeholder={locale === "zh" ? "搜索" : "Search"}
+              />
             </div>
 
             {showMobileNav ? (
